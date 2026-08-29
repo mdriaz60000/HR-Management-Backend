@@ -10,21 +10,29 @@ import type {
 } from "./user.validation";
 
 // Create User
-export const createUser = async (payload: CreateUserInput) => {
-  // Check existing email
-  const existingUser = await db
-    .select()
+export const createUser = async (
+  payload: CreateUserInput
+) => {
+  // Check email
+  const [existingUser] = await db
+    .select({
+      id: usersTable.id,
+    })
     .from(usersTable)
     .where(eq(usersTable.email, payload.email))
     .limit(1);
 
-  if (existingUser.length > 0) {
+  if (existingUser) {
     throw new Error("Email already exists");
   }
 
   // Hash password
-  const hashedPassword = await bcrypt.hash(payload.password, 10);
+  const hashedPassword = await bcrypt.hash(
+    payload.password,
+    10
+  );
 
+  // Create user
   const [user] = await db
     .insert(usersTable)
     .values({
@@ -46,7 +54,6 @@ export const createUser = async (payload: CreateUserInput) => {
 
   return user;
 };
-
 // Get All Users
 export const getAllUsers = async () => {
   const users = await db

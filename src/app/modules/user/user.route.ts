@@ -7,11 +7,18 @@ import {
   getUserByIdController,
   updateUserController,
 } from "./user.controller";
+import { authMiddleware } from "../../middleware/auth.middleware";
+import { roleMiddleware } from "../../middleware/role.middleware";
 
 const router = Router();
 
 // POST /api/users
-router.post("/", createUserController);
+router.post(
+  "/",
+  authMiddleware,
+  roleMiddleware("admin", "hr"),
+  createUserController
+);
 
 // GET /api/users
 router.get("/", getAllUsersController);

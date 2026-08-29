@@ -32,6 +32,7 @@ export const createUserController = async (
   } catch (error: any) {
     console.error(error);
 
+    // Zod validation error
     if (error.name === "ZodError") {
       return res.status(400).json({
         success: false,
@@ -40,6 +41,7 @@ export const createUserController = async (
       });
     }
 
+    // Duplicate email
     if (error.message === "Email already exists") {
       return res.status(409).json({
         success: false,
