@@ -1,10 +1,13 @@
 import { Router } from "express";
 
 import {
+  checkInController,
+  checkOutController,
   createAttendanceController,
   deleteAttendanceController,
   getAllAttendanceController,
   getAttendanceByIdController,
+  getMyAttendanceController,
   getUserAttendanceController,
   updateAttendanceController,
 } from "./attendance.controller";
@@ -14,6 +17,9 @@ import { roleMiddleware } from "../../middleware/role.middleware";
 
 
 const router = Router();
+
+router.post("/check-in", authMiddleware, checkInController);
+router.post("/check-out", authMiddleware, checkOutController);
 
 // HR/Admin create attendance
 router.post(
@@ -30,6 +36,8 @@ router.get(
   roleMiddleware("admin", "hr", "manager"),
   getAllAttendanceController
 );
+
+router.get("/me", authMiddleware, getMyAttendanceController);
 
 // User attendance
 router.get(

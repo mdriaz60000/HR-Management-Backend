@@ -5,6 +5,7 @@ import {
   uuid,
   date,
   text,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 import { usersTable } from "./user.schema";
@@ -52,5 +53,11 @@ export const attendanceTable = pgTable(
     updatedAt: timestamp("updated_at")
       .defaultNow()
       .notNull(),
-  }
+  },
+  (table) => [
+    uniqueIndex("attendance_user_date_idx").on(
+      table.userId,
+      table.date
+    ),
+  ]
 );

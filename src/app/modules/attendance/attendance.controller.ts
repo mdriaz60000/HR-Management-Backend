@@ -4,6 +4,8 @@ import {
 } from "express";
 
 import {
+  checkIn,
+  checkOut,
   createAttendance,
   deleteAttendance,
   getAllAttendance,
@@ -16,6 +18,77 @@ import {
   createAttendanceSchema,
   updateAttendanceSchema,
 } from "./attendance.validation";
+
+export const checkInController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    const result = await checkIn(req.user.id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Checked in successfully",
+      data: result,
+    });
+  } catch (error: any) {
+    if (error.message === "Already checked in today") {
+      return res.status(409).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to check in",
+    });
+  }
+};
+
+export const checkOutController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    const result = await checkOut(req.user.id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Checked out successfully",
+      data: result,
+    });
+  } catch (error: any) {
+    if (
+      error.message === "Check-in is required before check-out" ||
+      error.message === "Already checked out today"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to check out",
+    });
+  }
+};
 
 export const createAttendanceController =
   async (
@@ -110,6 +183,35 @@ export const createAttendanceController =
     }
   };
 
+export const getMyAttendanceController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    const result = await getUserAttendance(req.user.id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Attendance retrieved successfully",
+      data: result,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve attendance",
+    });
+  }
+};
+
   export const getUserAttendanceController =
   async (
     req: Request,
@@ -118,10 +220,19 @@ export const createAttendanceController =
     try {
       const { userId } = req.params;
 
-      if (Array.isArray(userId)) {
+      if (Array.isArray(userId) || !req.user) {
         return res.status(400).json({
           success: false,
           message: "Invalid user ID",
+        });
+      }
+
+      const privileged = ["admin", "hr", "manager"].includes(req.user.role);
+
+      if (userId !== req.user.id && !privileged) {
+        return res.status(403).json({
+          success: false,
+          message: "You are not authorized",
         });
       }
 

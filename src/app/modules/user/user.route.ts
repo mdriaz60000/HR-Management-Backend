@@ -20,16 +20,32 @@ router.post(
   createUserController
 );
 
-// GET /api/users
-router.get("/", getAllUsersController);
+router.get(
+  "/",
+  authMiddleware,
+  roleMiddleware("admin", "hr"),
+  getAllUsersController
+);
 
-// GET /api/users/:id
-router.get("/:id", getUserByIdController);
+router.get(
+  "/:id",
+  authMiddleware,
+  roleMiddleware("admin", "hr"),
+  getUserByIdController
+);
 
-// PATCH /api/users/:id
-router.patch("/:id", updateUserController);
+router.patch(
+  "/:id",
+  authMiddleware,
+  roleMiddleware("admin", "hr"),
+  updateUserController
+);
 
-// DELETE /api/users/:id
-router.delete("/:id", deleteUserController);
+router.delete(
+  "/:id",
+  authMiddleware,
+  roleMiddleware("admin"),
+  deleteUserController
+);
 
 export const userRouter = router;

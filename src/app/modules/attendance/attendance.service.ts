@@ -239,6 +239,79 @@ export const updateAttendance = async (
   return updatedAttendance;
 };
 
+export const checkIn = async (userId: string) => {
+  const today = new Date().toISOString().split("T")[0];
+
+  const [existing] = await db
+    .select()
+    .from(attendanceTable)
+    .where(
+      and(
+        eq(attendanceTable.userId, userId),
+        eq(attendanceTable.date, today)
+      )
+    )
+    .limit(1);
+
+  if (existing) {
+    if (existing.checkIn) {
+      throw new Error("Already checked in today");
+    }
+
+    const [updated] = await db
+      .update(attendanceTable)
+      .set({
+        checkIn: new Date(),
+        status: "present",
+        updatedAt: new Date(),
+      })
+      .where(eq(attendanceTable.id, existing.id))
+      .returning();
+
+    return updated;
+  }
+
+  return createAttendance({
+    userId,
+    date: today,
+    status: "present",
+  });
+};
+
+export const checkOut = async (userId: string) => {
+  const today = new Date().toISOString().split("T")[0];
+
+  const [existing] = await db
+    .select()
+    .from(attendanceTable)
+    .where(
+      and(
+        eq(attendanceTable.userId, userId),
+        eq(attendanceTable.date, today)
+      )
+    )
+    .limit(1);
+
+  if (!existing || !existing.checkIn) {
+    throw new Error("Check-in is required before check-out");
+  }
+
+  if (existing.checkOut) {
+    throw new Error("Already checked out today");
+  }
+
+  const [updated] = await db
+    .update(attendanceTable)
+    .set({
+      checkOut: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(attendanceTable.id, existing.id))
+    .returning();
+
+  return updated;
+};
+
 export const deleteAttendance = async (
   id: string
 ) => {
